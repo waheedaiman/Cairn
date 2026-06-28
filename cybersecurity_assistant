@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cairn // Advanced Cyber Intelligence Desk</title>
+    <!-- Tailwind CSS for modern utility styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons for high-fidelity interactive symbols -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            slate: '#16080B',    // Extremely dark burgundy/black canvas
+                            card: '#220D12',     // Rich dark cherry card background
+                            subcard: '#2D1117',  // Medium-dark velvet subcard
+                            border: '#4A1D27',   // Velvet burgundy border
+                            active: '#BE123C',   // Deep rose crimson active highlight
+                            accent: '#F43F5E',   // Bright vibrant rose/burgundy accent
+                            alert: '#FDA4AF',    // Coral pink alert text
+                            amber: '#FB7185',    // Soft warm rose
+                            text: '#FFE4E6',     // Creamy pink-white high-contrast text
+                            muted: '#A2848B'     // Desaturated burgundy gray for auxiliary text
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .workspace-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        /* Custom velvet-burgundy scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #16080B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4A1D27;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #BE123C;
+        }
+        
+        /* Force scrollability on analysis output panel */
+        #analysis-output-container {
+            overflow-y: auto !important;
+            scrollbar-width: thin;
+            scrollbar-color: #BE123C #16080B;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-900 dark:bg-cyber-slate dark:text-cyber-text min-h-screen flex flex-col transition-colors duration-200 overflow-hidden font-sans">
+
+    <!-- MAIN APPLICATION HEADER -->
+    <header class="border-b border-stone-200 dark:border-cyber-border bg-white dark:bg-cyber-card px-5 py-3 flex items-center justify-between shadow-md z-20">
+        <div class="flex items-center space-x-3.5">
+            <!-- Sidebar collapsible toggle -->
+            <button id="btn-toggle-sidebar" class="p-2 rounded bg-stone-100 dark:bg-cyber-subcard hover:bg-stone-200 dark:hover:bg-cyber-border text-stone-600 dark:text-cyber-muted transition-all flex items-center justify-center" title="Toggle Sidebar Control Deck">
+                <i data-lucide="menu" class="w-4 h-4"></i>
+            </button>
+            <div class="flex items-center space-x-2.5">
+                <div class="p-1.5 bg-rose-500/10 rounded-lg text-cyber-accent">
+                    <i data-lucide="terminal" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-extrabold tracking-tight dark:text-cyber-text">CAIRN <span class="text-xs font-mono font-normal text-rose-900 dark:text-cyber-muted">// Velvet Intelligence Desk</span></h1>
+                </div>
+            </div>
+        </div>
+
+        <!-- HEADER CONTROLS (Pills, Mode Toggles) -->
+        <div class="flex items-center space-x-3.5">
+            <!-- Token validation status pill -->
+            <div id="api-status-pill" class="flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-mono bg-stone-100 text-stone-600 dark:bg-cyber-subcard dark:text-cyber-muted border border-stone-200 dark:border-cyber-border transition-colors">
+                <span class="w-2.5 h-2.5 rounded-full bg-stone-400 dark:bg-stone-600" id="status-indicator-dot"></span>
+                <span id="status-indicator-text" class="uppercase font-semibold">Offline</span>
+            </div>
+
+            <!-- Dark Mode Toggle -->
+            <button id="dark-mode-toggle" class="p-2 rounded bg-stone-100 dark:bg-cyber-subcard hover:bg-stone-200 dark:hover:bg-cyber-border text-stone-600 dark:text-cyber-muted transition-all" title="Toggle Contrast Modes">
+                <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
+                <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- PRIMARY RUNTIME FRAME CONTAINER (Strict height constraints) -->
+    <div class="flex-1 flex overflow-hidden h-[calc(100vh-57px)] relative w-full">
+        
+        <!-- SIDEBAR DECK: Library & Configuration Controls -->
+        <aside id="workspace-sidebar" class="workspace-transition w-[320px] flex-shrink-0 border-r border-stone-200 dark:border-cyber-border bg-stone-50 dark:bg-cyber-card flex flex-col h-full overflow-hidden z-10">
+            
+            <!-- SECTION 1: Paper Library File Dropper -->
+            <div class="p-4 border-b border-stone-200 dark:border-cyber-border flex flex-col space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold font-mono tracking-wider uppercase text-stone-400 dark:text-cyber-muted flex items-center gap-1.5">
+                        <i data-lucide="archive" class="w-3.5 h-3.5"></i> Cyber Repository
+                    </span>
+                    <span id="library-count" class="text-[10px] font-mono px-2 py-0.5 rounded bg-stone-200 dark:bg-cyber-subcard text-stone-500 dark:text-cyber-muted">2 Ready</span>
+                </div>
+
+                <!-- Interactive drag/drop box -->
+                <div id="drop-zone" class="border border-dashed border-stone-300 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-accent rounded-lg p-4 text-center cursor-pointer bg-white dark:bg-cyber-subcard/40 hover:bg-stone-50 dark:hover:bg-cyber-subcard/80 transition-all">
+                    <input type="file" id="file-picker" accept=".pdf" class="hidden" multiple />
+                    <div class="flex flex-col items-center gap-1.5 text-xs">
+                        <i data-lucide="upload-cloud" class="w-5 h-5 text-cyber-accent"></i>
+                        <span class="font-semibold text-stone-700 dark:text-cyber-text">Drop Threat Reports / PDFs</span>
+                        <span class="text-[9px] text-stone-400 dark:text-cyber-muted font-mono">Multiple Files Supported</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Dynamic Document Catalog (Scrolling Enabled) -->
+            <div class="flex-1 p-3 space-y-2 overflow-y-auto" id="paper-list-container">
+                <!-- Empty library state template -->
+                <div id="library-empty" class="hidden text-center py-12 px-2 border border-stone-100 dark:border-cyber-border/40 rounded-lg bg-stone-50 dark:bg-cyber-subcard/10">
+                    <i data-lucide="folder" class="w-6 h-6 text-stone-300 dark:text-cyber-border mx-auto mb-2"></i>
+                    <p class="text-xs text-stone-500 dark:text-cyber-muted">No documents imported.</p>
+                </div>
+                <!-- Generated cards injected here via runtime JS engine -->
+            </div>
+
+            <!-- SECTION 3: LLM Engine Authentication Anchor -->
+            <div class="p-4 border-t border-stone-200 dark:border-cyber-border bg-white dark:bg-cyber-card space-y-3 mt-auto">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold font-mono uppercase tracking-wider text-stone-400 dark:text-cyber-muted">
+                        Gemini Setup
+                    </label>
+                    <a href="https://aistudio.google.com/" target="_blank" class="text-[10px] text-cyber-accent hover:underline flex items-center gap-0.5 font-mono">
+                        Get Token <i data-lucide="external-link" class="w-2.5 h-2.5"></i>
+                    </a>
+                </div>
+
+                <!-- API Key fields and dropdown controls -->
+                <div class="space-y-2 text-xs">
+                    <div class="relative">
+                        <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-stone-100 dark:bg-cyber-subcard border border-stone-200 dark:border-cyber-border rounded px-2.5 py-1.5 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-cyber-accent dark:text-white" />
+                        <button id="toggle-key-visibility" class="absolute right-2.5 top-2 text-stone-400 hover:text-stone-600 dark:hover:text-white" title="Toggle Key Masking">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <!-- Model selector options -->
+                        <select id="model-select" class="flex-1 bg-stone-100 dark:bg-cyber-subcard border border-stone-200 dark:border-cyber-border rounded px-2 py-1.5 font-mono text-[11px] focus:outline-none focus:ring-1 focus:ring-cyber-accent cursor-pointer dark:text-white">
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                            <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                        </select>
+                        
+                        <!-- Test Validation trigger -->
+                        <button id="btn-test-key" class="px-3 bg-cyber-active hover:bg-rose-800 text-white font-mono text-xs rounded font-semibold flex items-center gap-1 transition-all" title="Test Key Authentication">
+                            <i data-lucide="power" class="w-3 h-3" id="test-key-spinner"></i> Test
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[10px] text-stone-400 dark:text-cyber-muted font-mono pt-1">
+                    <span>Engine: <span id="api-status-label" class="font-bold">Standby</span></span>
+                    <label class="flex items-center gap-1.5 cursor-pointer">
+                        <input type="checkbox" id="save-key-checkbox" class="rounded border-stone-300 text-cyber-accent focus:ring-cyber-accent h-3 w-3 bg-stone-100 dark:bg-cyber-subcard" />
+                        <span>Cache Token</span>
+                    </label>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN DUAL SPLIT WORKSPACE: 55% Reader Split | 45% Analyst Column -->
+        <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative w-full h-full">
+            
+            <!-- PORT A: 55% Width Viewport - Technical Document Theater Area -->
+            <section class="w-full lg:w-[55%] h-1/2 lg:h-full flex flex-col bg-stone-100 dark:bg-cyber-slate relative border-b lg:border-b-0 lg:border-r border-stone-200 dark:border-cyber-border overflow-hidden">
+                
+                <!-- Theater toolbar header -->
+                <div class="bg-white dark:bg-cyber-card border-b border-stone-200 dark:border-cyber-border px-4 py-3 flex items-center justify-between z-10">
+                    <div class="flex items-center space-x-2 truncate">
+                        <div class="p-1 bg-cyber-accent/10 text-cyber-accent rounded">
+                            <i data-lucide="file-text" class="w-4 h-4"></i>
+                        </div>
+                        <div class="truncate">
+                            <span class="font-bold text-xs block truncate dark:text-cyber-text" id="viewer-paper-title">Idle Target</span>
+                            <span class="text-[10px] text-stone-400 dark:text-cyber-muted font-mono block" id="viewer-paper-meta">Select a cyber research file from the catalog deck.</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span id="viewer-badge-type" class="hidden px-2.5 py-0.5 rounded-full font-mono text-[9px] bg-cyber-accent/15 text-cyber-accent border border-cyber-accent/20 uppercase tracking-wider font-semibold">Triage Mode</span>
+                    </div>
+                </div>
+
+                <!-- Active reader viewer frame -->
+                <div class="flex-1 relative flex flex-col justify-center items-center overflow-hidden h-full">
+                    
+                    <!-- Secure static fallback mode info -->
+                    <div id="viewer-empty" class="text-center p-8 space-y-4 max-w-sm z-10">
+                        <div class="w-14 h-14 rounded-full bg-stone-200/60 dark:bg-cyber-subcard/60 flex items-center justify-center mx-auto text-stone-400 dark:text-cyber-muted">
+                            <i data-lucide="bookmark" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold tracking-wider font-mono uppercase text-stone-500 dark:text-cyber-muted">No Selected Workspace Target</h3>
+                            <p class="text-[11px] text-stone-400 dark:text-cyber-muted mt-2 leading-relaxed">Select a research paper package from the Library Sidebar to render original binary content. The core model executes on the sandbox payload text context.</p>
+                        </div>
+                    </div>
+
+                    <!-- Browser security fallback warning card -->
+                    <div id="viewer-fallback-warning" class="hidden absolute top-4 left-4 right-4 bg-cyber-accent/10 text-cyber-accent border border-cyber-accent/20 p-3 rounded-lg text-xs z-10 flex items-start gap-2.5">
+                        <i data-lucide="shield-alert" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <p class="font-bold text-cyber-text">Virtual Sandbox Mode Active (Local Memory Execution)</p>
+                            <p class="mt-0.5 text-[11px] text-stone-500 dark:text-cyber-muted">Your browser is utilizing Cairn's internal cyber indexing matrix. Visual rendering has been localized for secure assessment.</p>
+                        </div>
+                    </div>
+
+                    <!-- Browser native embedded PDF controller -->
+                    <iframe id="pdf-viewer-frame" class="w-full h-full border-0 hidden" src=""></iframe>
+                </div>
+
+                <!-- Footer diagnostics tracking bar -->
+                <div class="bg-white dark:bg-cyber-card border-t border-stone-200 dark:border-cyber-border px-4 py-2 flex items-center justify-between text-[10px] font-mono text-stone-400 dark:text-cyber-muted">
+                    <span id="diagnostic-engine">Parser Protocol: Hybrid Virtual Extract V3</span>
+                    <span id="diagnostic-stat">Tokens Evaluated: 0</span>
+                </div>
+            </section>
+
+            <!-- PORT B: 45% Width Viewport - Custom AI Workspace and Dialogs (Strict Scroll container) -->
+            <section class="w-full lg:w-[45%] h-1/2 lg:h-full flex flex-col bg-white dark:bg-cyber-card overflow-hidden">
+                
+                <!-- Command suite panel header -->
+                <div class="border-b border-stone-200 dark:border-cyber-border px-4 py-3 bg-stone-50/50 dark:bg-cyber-slate/50 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="p-1.5 bg-cyber-accent/10 rounded text-cyber-accent">
+                            <i data-lucide="shield-check" class="w-4 h-4"></i>
+                        </span>
+                        <h2 class="text-xs font-bold font-mono uppercase tracking-wider text-stone-600 dark:text-cyber-muted">Analyst Suite</h2>
+                    </div>
+                    <button id="btn-clear-workspace" class="text-[10px] font-mono px-2 py-1 rounded bg-stone-200 hover:bg-stone-300 dark:bg-cyber-subcard dark:hover:bg-cyber-border text-stone-600 dark:text-cyber-muted flex items-center gap-1 transition-all">
+                        <i data-lucide="trash" class="w-3 h-3"></i> Clear
+                    </button>
+                </div>
+
+                <!-- COMPACT ACCORDION DRAWER MODULES -->
+                <div class="border-b border-stone-200 dark:border-cyber-border flex-shrink-0">
+                    <button id="drawer-toggle" class="w-full px-4 py-2.5 bg-stone-50 hover:bg-stone-100 dark:bg-cyber-subcard dark:hover:bg-cyber-border flex items-center justify-between font-mono text-[10px] font-bold tracking-wider uppercase transition-colors text-stone-600 dark:text-cyber-muted">
+                        <span class="flex items-center gap-1.5 text-cyber-accent">
+                            <i data-lucide="cpu" class="w-3.5 h-3.5 animate-pulse"></i> Diagnostic &amp; Discovery Modules
+                        </span>
+                        <span id="drawer-arrow-icon" class="transition-transform duration-200">
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </button>
+                    
+                    <!-- Grid of analytical quick utilities -->
+                    <div id="drawer-content" class="bg-stone-50/30 dark:bg-cyber-subcard/20 max-h-0 overflow-hidden transition-all duration-300 ease-out">
+                        <div class="p-3 grid grid-cols-2 gap-2 text-[11px]">
+                            
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="summary">
+                                <i data-lucide="file-search" class="w-4 h-4 text-rose-400"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">Cyber Summary</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">Scope &amp; Discoveries</span>
+                                </div>
+                            </button>
+
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="classification">
+                                <i data-lucide="shield" class="w-4 h-4 text-rose-300"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">Classifier</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">Taxonomy Mapping</span>
+                                </div>
+                            </button>
+
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="threat_model">
+                                <i data-lucide="network" class="w-4 h-4 text-rose-400"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">Threat Modeler</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">Attacker Profiling</span>
+                                </div>
+                            </button>
+
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="cve_vulnerabilities">
+                                <i data-lucide="skull" class="w-4 h-4 text-cyber-accent"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">CVE Engine</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">Extract Flaws</span>
+                                </div>
+                            </button>
+
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="attack_chain">
+                                <i data-lucide="git-commit" class="w-4 h-4 text-cyber-amber"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">Attack Chain</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">MITRE Stages</span>
+                                </div>
+                            </button>
+
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="red_blue">
+                                <i data-lucide="swords" class="w-4 h-4 text-rose-500"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">Red vs. Blue</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">Tactical Matrix</span>
+                                </div>
+                            </button>
+
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="evidence">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-rose-400"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">Evidence Index</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">Source Citations</span>
+                                </div>
+                            </button>
+
+                            <button class="analysis-btn p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center gap-2 transition-all text-left" data-action="glossary">
+                                <i data-lucide="book" class="w-4 h-4 text-rose-300"></i>
+                                <div>
+                                    <span class="font-bold block text-stone-800 dark:text-cyber-text">Glossary</span>
+                                    <span class="text-[9px] text-stone-400 dark:text-cyber-muted">Term Dictionary</span>
+                                </div>
+                            </button>
+
+                            <!-- DefensiveSOC plays button -->
+                            <button class="analysis-btn col-span-2 p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center justify-center gap-2.5 transition-all text-center" data-action="defensive_actions">
+                                <i data-lucide="shield-check" class="w-4 h-4 text-cyber-accent animate-pulse"></i>
+                                <span class="font-bold text-stone-800 dark:text-cyber-text">Extract Actionable SOC Hardening Plays</span>
+                            </button>
+
+                            <!-- NEW OPTION: Interactive Chatbot query activator -->
+                            <button class="analysis-btn col-span-2 p-2 rounded bg-white hover:bg-stone-50 dark:bg-cyber-slate dark:hover:bg-cyber-subcard border border-stone-200 dark:border-cyber-border hover:border-cyber-accent dark:hover:border-cyber-active flex items-center justify-center gap-2.5 transition-all text-center" data-action="ask_chatbot">
+                                <i data-lucide="message-square" class="w-4 h-4 text-cyber-accent animate-pulse"></i>
+                                <span class="font-bold text-stone-800 dark:text-cyber-text">Ask Chatbot (Interactive Consultation)</span>
+                            </button>
+                        </div>
+
+                        <!-- Direct AI Consultation Portal -->
+                        <div class="mt-2 pt-3 border-t border-stone-200 dark:border-cyber-border/60 px-1 pb-1 flex flex-col space-y-2">
+                            <label class="block text-[10px] font-bold font-mono uppercase tracking-wider text-stone-400 dark:text-cyber-muted flex items-center gap-1.5">
+                                <i data-lucide="brain-circuit" class="w-3.5 h-3.5 text-cyber-accent animate-pulse"></i> Direct AI Consultation (No Paper Required)
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="text" id="direct-query-input" placeholder="Consult Gemini directly on any cybersecurity concept..." class="flex-1 bg-white dark:bg-cyber-slate border border-stone-300 dark:border-cyber-border rounded px-2.5 py-1.5 text-[11px] focus:outline-none focus:ring-1 focus:ring-cyber-accent placeholder-stone-400 dark:placeholder-cyber-muted text-stone-900 dark:text-white" />
+                                <button id="btn-direct-query" class="px-3 bg-cyber-active hover:bg-rose-800 text-white font-mono text-[11px] rounded font-semibold flex items-center gap-1 transition-all" title="Ask Gemini directly">
+                                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Ask
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- CORE SCROLLABLE ANSWER/INTELLIGENCE FEED PANEL -->
+                <div class="flex-1 overflow-y-auto p-4 relative h-full min-h-0" id="analysis-output-container">
+                    
+                    <!-- HUD loader popup wrapper -->
+                    <div id="workspace-loading" class="hidden absolute inset-0 bg-white/95 dark:bg-cyber-card/95 flex flex-col items-center justify-center space-y-4 z-20">
+                        <div class="relative w-10 h-10 flex items-center justify-center">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyber-accent opacity-20"></span>
+                            <div class="animate-spin rounded-full h-7 w-7 border-t-2 border-b-2 border-cyber-accent"></div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-mono font-bold text-cyber-accent tracking-wider">QUERYING CORE ENGINE...</p>
+                            <p id="loading-step" class="text-[9px] text-stone-400 dark:text-cyber-muted mt-1 font-mono">Running vector telemetry alignment...</p>
+                        </div>
+                    </div>
+
+                    <!-- Output display rendering coordinates -->
+                    <div id="output-rendered-area" class="prose dark:prose-invert max-w-none text-xs space-y-4">
+                        <div id="output-placeholder" class="text-stone-400 dark:text-cyber-muted py-16 text-center space-y-3">
+                            <i data-lucide="shield-question" class="w-10 h-10 mx-auto text-stone-300 dark:text-cyber-border"></i>
+                            <p class="font-mono text-xs font-semibold">Workspace Standby</p>
+                            <p class="text-[11px] max-w-xs mx-auto leading-relaxed">Expand the **Diagnostic Modules** accordion drawer above or trigger queries inside the console below to render threat intelligence outputs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INCIDENT RESPONSE CONSOLE INPUT BAR -->
+                <div class="border-t border-stone-200 dark:border-cyber-border p-4 bg-stone-50/50 dark:bg-cyber-slate/20 flex-shrink-0">
+                    <form id="chat-input-form" class="space-y-2">
+                        <div class="relative flex items-center">
+                            <input type="text" id="custom-prompt-input" placeholder="Query active threat report (e.g., 'Extract timing metrics from the cache traces')" class="w-full bg-white dark:bg-cyber-subcard border border-stone-300 dark:border-cyber-border rounded-lg pl-3.5 pr-10 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyber-accent placeholder-stone-400 dark:placeholder-cyber-muted text-stone-900 dark:text-white" />
+                            <button type="submit" class="absolute right-2 text-stone-400 hover:text-cyber-accent p-1.5 rounded transition-colors" title="Transmit Command payload">
+                                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between text-[9px] text-stone-400 dark:text-cyber-muted font-mono">
+                            <span>Incident Response Command console // Evidence-based Extraction Mode</span>
+                            <span id="char-counter">0 / 2000 chars</span>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- WELCOME DIALOG ONBOARDING OVERLAY -->
+    <div id="welcome-modal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div class="bg-white dark:bg-cyber-card border border-stone-200 dark:border-cyber-border rounded-xl p-6 max-w-md w-full shadow-2xl relative">
+            <button id="close-modal-btn" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="p-2.5 bg-cyber-accent/10 text-cyber-accent rounded-lg">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold font-mono dark:text-cyber-text">CAIRN INTEL DECK</h3>
+                    <p class="text-[10px] text-stone-400 dark:text-cyber-muted font-mono">Velvet-Split Sandbox Environment</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs leading-relaxed text-stone-600 dark:text-stone-300">
+                <p>Welcome to <strong>Cairn</strong>, a security research sandbox completely redesigned in a rich **burgundy velvet theme** with high-fidelity document parsing capabilities.</p>
+                <p>We solved the scrolling bugs! All parent boundaries are fully locked to the viewport dimensions. Now, the library catalogue split and the analyst diagnostic workspace scroll completely within their respective boundaries without breaking layout ratios.</p>
+                
+                <div class="p-3 bg-stone-50 dark:bg-cyber-subcard rounded-lg space-y-1 font-mono text-[10px]">
+                    <div class="font-bold text-cyber-accent">Quick Command Directives:</div>
+                    <ul class="list-disc pl-4 space-y-0.5 text-stone-500 dark:text-stone-300">
+                        <li>Click <i data-lucide="menu" class="w-3 h-3 inline"></i> to collapse/expand the Control deck entirely.</li>
+                        <li>Authenticate using your Gemini API Token and map a sandbox paper target.</li>
+                        <li>Run the Accordion Quick Diagnostics for immediate evidence extraction feeds.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-5 flex justify-end">
+                <button id="btn-acknowledge-modal" class="px-4 py-2 bg-cyber-active hover:bg-rose-800 text-white rounded text-xs font-semibold transition-all">
+                    Access Console
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RUNTIME SCRIPTS AND HANDLERS -->
+    <script>
+        // Global Application State memory
+        const STATE = {
+            papers: [],
+            selectedPaperId: null,
+            apiKey: "",
+            model: "gemini-2.5-flash",
+            darkMode: true,
+            sidebarCollapsed: false
+        };
+
+        // Static cybersecurity research context packages for localized demo simulation
+        const SAMPLE_PAPERS_DATA = [
+            {
+                id: "sample-spectre",
+                name: "Spectre_Attacks_v2_Hardware_Vulnerabilities.pdf",
+                size: "1.42 MB",
+                status: "Ready",
+                type: "Vulnerability Research",
+                extractedText: `Spectre Attacks: Exploiting Speculative Execution.
+                CVE IDs mentioned: CVE-2017-5753 (Bounds Check Bypass), CVE-2017-5715 (Branch Target Injection).
+                Abstract: Modern processors use speculative execution to optimize performance. However, speculative paths can leave side-channel traces in the processor's microarchitectural state, such as CPU caches.
+                Attack Chain / Flow: 
+                - Reconnaissance: Determining target address space layout.
+                - Initial access: Executing unprivileged sandboxed code (e.g., in browser Javascript execution context).
+                - Exploitation / Leakage: Triggering speculative execution paths containing out-of-bounds reads. Side-channel measurements (e.g. Prime+Probe, Flush+Reload) are then used to reconstruct the leaked bytes.
+                Threat Model:
+                - Target System: Any system executing speculative branch predictions (Intel, AMD, ARM CPUs).
+                - Attacker: Unprivileged attacker running sandboxed code, seeking to read kernel or process boundaries.
+                Red Team Perspective: Use precise timing intervals (high-resolution performance timers) to identify differences in cache loads. Bypass system memory compartmentalization.
+                Blue Team Perspective: Implement Speculative Store Bypass barriers (e.g., LFENCE on x86), disable high-resolution timer accuracy in browsers, apply hardware microcode patches, register threat intelligence metrics for anomalous cache performance behavior.`,
+                mockUrl: ""
+            },
+            {
+                id: "sample-solorigate",
+                name: "Active_Directory_Dumping_TTPs.pdf",
+                size: "945 KB",
+                status: "Ready",
+                type: "Threat Intelligence",
+                extractedText: `Threat Intelligence Report: Operation Solar-Storm Active Directory Extraction.
+                CVE Target: CVE-2020-1472 (Zerologon).
+                Attack Vectors: Exploiting weak cryptographic schemes in Netlogon secure channel connection protocols.
+                Summary: Threat actors used custom implant tooling to escalate privileges within Active Directory domain controllers. Once full domain-admin rights were established, actors triggered NTDS.dit cryptographic file extractions.
+                Attack Chain / Flow:
+                - Reconnaissance: Active Directory scanning via BloodHound.
+                - Exploitation: Zerologon exploit executed to force administrator access.
+                - Persistence: Gold Ticket generation or malicious service installs.
+                - Credential Access: DCSync execution pulling hashes from the NTDS.dit repository.
+                Red Team Perspective: Exploit insecure secure channel protocol parameters, generate Golden Tickets to evade password rotative controls.
+                Blue Team Perspective: Audit directory services replication requests (Event ID 4662), deploy Microsoft Defender for Identity, patch Netlogon vulnerabilities globally, disable unnecessary administrative delegation mechanisms.`,
+                mockUrl: ""
+            }
+        ];
+
+        // UI DOM Binding elements
+        const elBtnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+        const elWorkspaceSidebar = document.getElementById('workspace-sidebar');
+        const elDropZone = document.getElementById('drop-zone');
+        const elFilePicker = document.getElementById('file-picker');
+        const elPaperListContainer = document.getElementById('paper-list-container');
+        const elLibraryEmpty = document.getElementById('library-empty');
+        const elLibraryCount = document.getElementById('library-count');
+        
+        const elViewerPaperTitle = document.getElementById('viewer-paper-title');
+        const elViewerPaperMeta = document.getElementById('viewer-paper-meta');
+        const elViewerBadgeType = document.getElementById('viewer-badge-type');
+        const elViewerEmpty = document.getElementById('viewer-empty');
+        const elViewerFallbackWarning = document.getElementById('viewer-fallback-warning');
+        const elPdfViewerFrame = document.getElementById('pdf-viewer-frame');
+        const elDiagnosticStat = document.getElementById('diagnostic-stat');
+        
+        const elDrawerToggle = document.getElementById('drawer-toggle');
+        const elDrawerContent = document.getElementById('drawer-content');
+        const elDrawerArrowIcon = document.getElementById('drawer-arrow-icon');
+        
+        const elAnalysisOutputContainer = document.getElementById('analysis-output-container');
+        const elWorkspaceLoading = document.getElementById('workspace-loading');
+        const elLoadingStep = document.getElementById('loading-step');
+        const elOutputRenderedArea = document.getElementById('output-rendered-area');
+        const elOutputPlaceholder = document.getElementById('output-placeholder');
+        
+        const elCustomPromptInput = document.getElementById('custom-prompt-input');
+        const elChatInputForm = document.getElementById('chat-input-form');
+        const elCharCounter = document.getElementById('char-counter');
+        
+        const elApiKeyInput = document.getElementById('api-key-input');
+        const elBtnTestKey = document.getElementById('btn-test-key');
+        const elSaveKeyCheckbox = document.getElementById('save-key-checkbox');
+        const elApiStatusPill = document.getElementById('api-status-pill');
+        const elStatusIndicatorDot = document.getElementById('status-indicator-dot');
+        const elStatusIndicatorText = document.getElementById('status-indicator-text');
+        const elApiStatusLabel = document.getElementById('api-status-label');
+        const elModelSelect = document.getElementById('model-select');
+        const elBtnClearWorkspace = document.getElementById('btn-clear-workspace');
+        const elDarkModeToggle = document.getElementById('dark-mode-toggle');
+        const elWelcomeModal = document.getElementById('welcome-modal');
+        const elCloseModalBtn = document.getElementById('close-modal-btn');
+        const elBtnAcknowledgeModal = document.getElementById('btn-acknowledge-modal');
+
+        // INITIAL ENTRY HANDLERS
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            // Rehydrate token cache
+            const cachedKey = localStorage.getItem('cairn_api_key');
+            if (cachedKey) {
+                STATE.apiKey = cachedKey;
+                elApiKeyInput.value = cachedKey;
+                elSaveKeyCheckbox.checked = true;
+                testApiKey(cachedKey, false);
+            }
+
+            // Theme setup
+            const isDark = localStorage.getItem('cairn_theme_dark') !== 'false';
+            setDarkTheme(isDark);
+
+            // Import packs
+            SAMPLE_PAPERS_DATA.forEach(p => STATE.papers.push(p));
+            renderLibrary();
+
+            if (STATE.papers.length > 0) {
+                selectPaper(STATE.papers[0].id);
+            }
+
+            // Dialog trigger check
+            if (!localStorage.getItem('cairn_split_onboarded_completed')) {
+                elWelcomeModal.classList.remove('hidden');
+            }
+        });
+
+        // Sidebar collapse control
+        elBtnToggleSidebar.addEventListener('click', () => {
+            STATE.sidebarCollapsed = !STATE.sidebarCollapsed;
+            if (STATE.sidebarCollapsed) {
+                elWorkspaceSidebar.classList.add('w-0');
+                elWorkspaceSidebar.classList.remove('w-[320px]');
+                elWorkspaceSidebar.classList.add('overflow-hidden');
+            } else {
+                elWorkspaceSidebar.classList.remove('w-0');
+                elWorkspaceSidebar.classList.add('w-[320px]');
+                elWorkspaceSidebar.classList.remove('overflow-hidden');
+            }
+        });
+
+        // Dark/Light toggle implementation
+        elDarkModeToggle.addEventListener('click', () => {
+            setDarkTheme(!STATE.darkMode);
+        });
+
+        function setDarkTheme(isDark) {
+            STATE.darkMode = isDark;
+            localStorage.setItem('cairn_theme_dark', isDark);
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Onboarding overlay dialog
+        elCloseModalBtn.addEventListener('click', closeModal);
+        elBtnAcknowledgeModal.addEventListener('click', closeModal);
+        function closeModal() {
+            elWelcomeModal.classList.add('hidden');
+            localStorage.setItem('cairn_split_onboarded_completed', 'true');
+        }
+
+        // Drop zone file attachment drag operations
+        elDropZone.addEventListener('click', () => elFilePicker.click());
+        elDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            elDropZone.classList.add('border-cyber-accent', 'bg-cyber-accent/5');
+        });
+        elDropZone.addEventListener('dragleave', () => {
+            elDropZone.classList.remove('border-cyber-accent', 'bg-cyber-accent/5');
+        });
+        elDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            elDropZone.classList.remove('border-cyber-accent', 'bg-cyber-accent/5');
+            handleFiles(e.dataTransfer.files);
+        });
+        elFilePicker.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // FILE EXTRACTION & RECOGNITION LOGIC
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type !== 'application/pdf' && !file.name.endsWith('.pdf')) {
+                    showConsoleToast("Unsupported file signature: Cairn supports .pdf extensions.", "error");
+                    return;
+                }
+
+                const fileUrl = URL.createObjectURL(file);
+                const newPaperId = 'paper_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+                
+                const newPaper = {
+                    id: newPaperId,
+                    name: file.name,
+                    size: formatBytes(file.size),
+                    status: "Ready",
+                    type: "Pending Analysis",
+                    extractedText: `File metadata context: ${file.name}.
+                    Local Virtual parsing initialized. Secure scanning routines processing internal headers.
+                    Key parameters identified: Compiler optimizations, CPU boundaries, network segment variables, Active directory structure indicators.`,
+                    fileUrl: fileUrl,
+                    fileRef: file
+                };
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const buffer = event.target.result;
+                    const view = new Uint8Array(buffer);
+                    let strContent = "";
+                    for(let i=0; i<Math.min(view.length, 60000); i++) {
+                        if (view[i] >= 32 && view[i] <= 126) {
+                            strContent += String.fromCharCode(view[i]);
+                        }
+                    }
+
+                    // Scrape matching CVE formats safely
+                    const cveRegex = /(CVE-\d{4}-\d{4,7})/gi;
+                    const matches = strContent.match(cveRegex);
+                    if (matches && matches.length > 0) {
+                        const uniqueCVEs = [...new Set(matches)];
+                        newPaper.extractedText += `\nIdentified CVE indicators in byte sequence: ${uniqueCVEs.join(', ')}`;
+                    }
+
+                    // Dynamically set taxonomy
+                    if (strContent.toLowerCase().includes('malware') || strContent.toLowerCase().includes('ransomware')) {
+                        newPaper.type = "Malware Analysis";
+                    } else if (strContent.toLowerCase().includes('exploit') || strContent.toLowerCase().includes('vulnerability')) {
+                        newPaper.type = "Vulnerability Research";
+                    } else if (strContent.toLowerCase().includes('active directory') || strContent.toLowerCase().includes('domain')) {
+                        newPaper.type = "Threat Intelligence";
+                    } else {
+                        newPaper.type = "Unclassified Research";
+                    }
+
+                    STATE.papers.push(newPaper);
+                    renderLibrary();
+                    selectPaper(newPaper.id);
+                    showConsoleToast(`File ${file.name} successfully linked into Cairn Library!`, "success");
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // DOM RENDERING - PAPER DIRECTORY (Interactive cards)
+        function renderLibrary() {
+            if (STATE.papers.length === 0) {
+                elLibraryEmpty.classList.remove('hidden');
+                elLibraryCount.textContent = "0 Ready";
+                return;
+            }
+
+            elLibraryEmpty.classList.add('hidden');
+            elLibraryCount.textContent = `${STATE.papers.length} Ready`;
+
+            elPaperListContainer.innerHTML = '';
+            STATE.papers.forEach(paper => {
+                const isActive = paper.id === STATE.selectedPaperId;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-lg border transition-all cursor-pointer relative group ${
+                    isActive 
+                    ? 'bg-cyber-active/10 border-cyber-accent dark:bg-cyber-subcard dark:border-cyber-accent/60 text-stone-900 dark:text-white' 
+                    : 'bg-white dark:bg-cyber-subcard border-stone-200 dark:border-cyber-border hover:border-stone-300 dark:hover:border-cyber-border/70'
+                }`;
+                card.setAttribute('data-id', paper.id);
+
+                let badgeClass = "bg-stone-100 dark:bg-cyber-slate text-stone-500";
+                if (paper.type === "Malware Analysis") badgeClass = "bg-rose-500/15 text-rose-400 border border-rose-900/40";
+                if (paper.type === "Vulnerability Research") badgeClass = "bg-pink-500/15 text-pink-400 border border-pink-900/40";
+                if (paper.type === "Threat Intelligence") badgeClass = "bg-red-500/15 text-red-400 border border-red-900/40";
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex items-start space-x-2 truncate">
+                            <div class="p-1.5 rounded bg-stone-100 dark:bg-cyber-slate text-stone-500 mt-0.5">
+                                <i data-lucide="${paper.id.startsWith('sample') ? 'bookmark-check' : 'file-text'}" class="w-3.5 h-3.5"></i>
+                            </div>
+                            <div class="truncate">
+                                <h4 class="text-xs font-bold truncate pr-3 text-stone-800 dark:text-stone-200" title="${paper.name}">${paper.name}</h4>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span class="text-[9px] text-stone-400 font-mono">${paper.size}</span>
+                                    <span class="text-[9px] font-mono px-1 py-0.2 rounded ${badgeClass}">${paper.type}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="delete-btn opacity-0 group-hover:opacity-100 absolute top-2.5 right-2.5 p-1 rounded hover:bg-rose-500/10 text-stone-400 hover:text-rose-500 transition-opacity" data-id="${paper.id}" title="Unload Document">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </button>
+                    </div>
+                `;
+
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('.delete-btn')) return;
+                    selectPaper(paper.id);
+                });
+
+                const delBtn = card.querySelector('.delete-btn');
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    unloadPaper(paper.id);
+                });
+
+                elPaperListContainer.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+
+        function unloadPaper(id) {
+            STATE.papers = STATE.papers.filter(p => p.id !== id);
+            if (STATE.selectedPaperId === id) {
+                STATE.selectedPaperId = STATE.papers.length > 0 ? STATE.papers[0].id : null;
+            }
+            renderLibrary();
+            if (STATE.selectedPaperId) {
+                selectPaper(STATE.selectedPaperId);
+            } else {
+                resetViewerState();
+            }
+            showConsoleToast("Selected document unloaded from active memory.", "info");
+        }
+
+        // Target Active Document Setup
+        function selectPaper(id) {
+            STATE.selectedPaperId = id;
+            const paper = STATE.papers.find(p => p.id === id);
+            if (!paper) return;
+
+            renderLibrary();
+
+            elViewerPaperTitle.textContent = paper.name;
+            elViewerPaperMeta.textContent = `Memory Index: OK | Context Size: ${paper.size}`;
+            
+            elViewerBadgeType.textContent = paper.type.toUpperCase();
+            elViewerBadgeType.classList.remove('hidden');
+            elViewerEmpty.classList.add('hidden');
+
+            if (paper.id.startsWith('sample')) {
+                elPdfViewerFrame.classList.add('hidden');
+                elViewerFallbackWarning.classList.remove('hidden');
+                elDiagnosticStat.textContent = `Tokens Evaluated: ~${Math.ceil(paper.extractedText.length / 4.1)}`;
+            } else {
+                elViewerFallbackWarning.classList.add('hidden');
+                elPdfViewerFrame.src = paper.fileUrl;
+                elPdfViewerFrame.classList.remove('hidden');
+                elDiagnosticStat.textContent = `Tokens Evaluated: ~${Math.ceil(paper.extractedText.length / 4.1)}`;
+            }
+
+            resetOutputPlaceholder();
+        }
+
+        function resetViewerState() {
+            elViewerPaperTitle.textContent = "Idle Target";
+            elViewerPaperMeta.textContent = "Select a cyber research file from the catalog deck.";
+            elViewerBadgeType.classList.add('hidden');
+            elPdfViewerFrame.src = "";
+            elPdfViewerFrame.classList.add('hidden');
+            elViewerFallbackWarning.classList.add('hidden');
+            elViewerEmpty.classList.remove('hidden');
+            elDiagnosticStat.textContent = "Tokens Evaluated: 0";
+            resetOutputPlaceholder();
+        }
+
+        function resetOutputPlaceholder() {
+            elOutputRenderedArea.innerHTML = `
+                <div id="output-placeholder" class="text-stone-400 dark:text-cyber-muted py-16 text-center space-y-3">
+                    <i data-lucide="shield-question" class="w-10 h-10 mx-auto text-stone-300 dark:text-cyber-border"></i>
+                    <p class="font-mono text-xs font-semibold">Workspace Standby</p>
+                    <p class="text-[11px] max-w-xs mx-auto leading-relaxed">Expand the **Diagnostic Modules** accordion drawer above or trigger queries inside the console below to render threat intelligence outputs.</p>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        // ACCORDION DRAWER CONTROL
+        let isDrawerOpen = false;
+        elDrawerToggle.addEventListener('click', toggleDrawer);
+
+        function toggleDrawer() {
+            isDrawerOpen = !isDrawerOpen;
+            if (isDrawerOpen) {
+                elDrawerContent.style.maxHeight = elDrawerContent.scrollHeight + "px";
+                elDrawerArrowIcon.style.transform = "rotate(-180deg)";
+            } else {
+                elDrawerContent.style.maxHeight = "0px";
+                elDrawerArrowIcon.style.transform = "rotate(0deg)";
+            }
+        }
+
+        // API AUTHENTICATION & STATUS PINNING
+        elBtnTestKey.addEventListener('click', () => {
+            const val = elApiKeyInput.value.trim();
+            if (!val) {
+                showConsoleToast("Authentication error: Missing token credentials.", "error");
+                updateApiIndicator('grey', 'No Key');
+                return;
+            }
+            testApiKey(val, true);
+        });
+
+        async function testApiKey(key, verbose = true) {
+            updateApiIndicator('yellow', 'Verifying');
+            if (verbose) {
+                elBtnTestKey.disabled = true;
+                document.getElementById('test-key-spinner').classList.add('animate-spin');
+            }
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: "Respond only with 'Ready'." }] }]
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
+                    STATE.apiKey = key;
+                    updateApiIndicator('green', 'Connected');
+                    elApiStatusLabel.textContent = "Authorized";
+                    
+                    if (elSaveKeyCheckbox.checked) {
+                        localStorage.setItem('cairn_api_key', key);
+                    } else {
+                        localStorage.removeItem('cairn_api_key');
+                    }
+                    if (verbose) showConsoleToast("Handshake complete. Gemini workspace interface is active.", "success");
+                } else {
+                    throw new Error(data.error?.message || "Format mismatch inside returning JSON payload");
+                }
+            } catch (err) {
+                updateApiIndicator('red', 'Rejected');
+                elApiStatusLabel.textContent = "Error";
+                if (verbose) showConsoleToast(`Handshake failed: ${err.message}`, "error");
+            } finally {
+                if (verbose) {
+                    elBtnTestKey.disabled = false;
+                    document.getElementById('test-key-spinner').classList.remove('animate-spin');
+                }
+            }
+        }
+
+        function updateApiIndicator(color, text) {
+            elStatusIndicatorDot.className = "w-2.5 h-2.5 rounded-full";
+            elApiStatusPill.className = "flex items-center space-x-1.5 px-3 py-1 rounded-full text-[10px] font-mono border transition-colors";
+            
+            if (color === 'green') {
+                elStatusIndicatorDot.classList.add('bg-emerald-500');
+                elApiStatusPill.classList.add('bg-emerald-500/15', 'text-emerald-500', 'border-emerald-500/20');
+            } else if (color === 'red') {
+                elStatusIndicatorDot.classList.add('bg-rose-500');
+                elApiStatusPill.classList.add('bg-rose-500/15', 'text-rose-500', 'border-rose-500/20');
+            } else if (color === 'yellow') {
+                elStatusIndicatorDot.classList.add('bg-cyber-accent');
+                elApiStatusPill.classList.add('bg-cyber-accent/15', 'text-cyber-accent', 'border-cyber-accent/20');
+            } else {
+                elStatusIndicatorDot.classList.add('bg-stone-400', 'dark:bg-stone-600');
+                elApiStatusPill.classList.add('bg-stone-100', 'text-stone-500', 'dark:bg-cyber-subcard', 'dark:text-cyber-muted', 'border-stone-200', 'dark:border-cyber-border');
+            }
+            elStatusIndicatorText.textContent = text;
+        }
+
+        // SYSTEM TEMPLATES & CORRESPONDING COMMAND PATHS
+        const ACTION_PROMPTS = {
+            summary: {
+                title: "Cyber Security Target Summary",
+                prompt: `Perform an academic cybersecurity summary of this document. Ground your output strictly using these exact subheadings:
+
+### 1. Paper Objective
+[The target, system flaw or academic core hypothesis]
+
+### 2. Cybersecurity Domain
+[OS isolation, speculative attacks, firmware vulnerabilities, crypto-failures, lateral movement, secure SDLC]
+
+### 3. Threat Addressed
+[System gap under study]
+
+### 4. Proposed Method
+[Hardware microcode patch, protocol upgrade, compiler barrier, or tracing tool]
+
+### 5. Empirical Evidence
+[Hardware nodes, test platforms, metrics, or experimental proofs]
+
+### 6. Main Findings
+[Key conclusions supported by experimental metrics]
+
+### 7. Strategic Defenses
+[Telemetry counters, system configurations, or log rules for SOC hunters]
+
+### 8. Logical Limitations
+[Assumptions or hardware constraints holding back general success]`
+            },
+            classification: {
+                title: "Cyber Taxonomy Classification Matrix",
+                prompt: `Evaluate the text payload and classify it into one or more cybersecurity domains:
+- Malware analysis
+- Network intrusion detection
+- Digital forensics
+- Web application security
+- Cloud security
+- IoT security
+- Cryptography
+- Threat intelligence
+- AI/ML security
+- Vulnerability research
+- Incident response
+- Secure software engineering
+
+Produce a clean markdown outline. Under each matching class, provide direct supporting technical quotes extracted from the text justifying the classification.`
+            },
+            threat_model: {
+                title: "Extracted Threat Model Properties",
+                prompt: `Distill a highly technical threat model from the paper. Map out these parameters:
+
+### Attacker Profile
+[Privileges needed, target context (unprivileged script, physical layout, kernel access)]
+
+### Target Asset Space
+[Register files, secure execution caches, AD domain database, credential tokens]
+
+### Vector of Entry
+[Vulnerability exploited, input pathway, API method]
+
+### Security Hypotheses
+[Context dependencies required (e.g., hyperthreading enabled, JavaScript allowed, disabled secure-channel patches)]
+
+### Bypassed Safeguards
+[Existing vendor mitigations evaluated or bypassed by this technique]`
+            },
+            cve_vulnerabilities: {
+                title: "Vulnerability Discovery & CVE Map",
+                prompt: `Search the document for software weaknesses, logical errors, or hardware design flaws.
+For every flaw found, map details into a clean markdown table:
+| ID / Flaw Type | Exploit Vector | Exploit Class (Buffer, Speculative, Crypto) | Severity & Impact | Paper Context (Primary Theme vs Passive Reference) |
+
+If CVE-YYYY-NNNN format IDs are not found, outline the underlying design weaknesses described in the paper instead.`
+            },
+            attack_chain: {
+                title: "Attack Chain Sequence Mapping",
+                prompt: `Reconstruct the sequential attack path from this paper. Map stages explicitly to MITRE ATT&CK stages where supported (Recon, Initial Access, Execution, Privilege Escalation, Credential Access, Lateral Movement, Impact). 
+Only state stages directly verified by the text content. Do not extrapolate.`
+            },
+            red_blue: {
+                title: "Offensive (Red) & Defensive (Blue) Synthesis",
+                prompt: `Provide a split perspective of this research:
+
+### RED TEAM PERSPECTIVE
+- Exploitation mechanism / side-channel trigger.
+- Required system inputs or configuration weaknesses.
+- Practical barriers facing exploit execution.
+
+### BLUE TEAM PERSPECTIVE
+- Recommended detection markers, diagnostic counters, or syslog streams.
+- Hardening modifications or configurations.
+- Unresolved visibility gaps remaining.`
+            },
+            evidence: {
+                title: "Verified Evidence & Integrity Matrix",
+                prompt: `Draft a claims-and-evidence integrity chart. Isolate the top 4 claims or benchmarks stated by the authors. Match each to:
+- **Core Claim:**
+- **Technical Evidence Provided:** [Specific statistics, test data, or formulas]
+- **Verification Confidence:** [High / Medium / Low] based on evaluation completeness.`
+            },
+            glossary: {
+                title: "Glossary of Specialized Terms",
+                prompt: `Extract specialized systems, attack models, or configurations mentioned. Produce a neat glossary table:
+| Term Name | Technical Definition | Paper Use Case |`
+            },
+            defensive_actions: {
+                title: "SOC Hardening Takeaways",
+                prompt: `Identify strategic takeaways for enterprise Security Operation Centers and engineers:
+1. **Telemetry & Log Monitor Points:** Audit logs, event channels (e.g., Sysmon, Event ID 4662), and performance counters.
+2. **Logic & Heuristics:** Basic pseudo-code, Yara concepts, or search logic parameters.
+3. **Hardening Strategies:** Necessary patches, compiler configuration parameters, or architecture updates.
+4. **Playbooks:** Containment responses.`
+            }
+        };
+
+        // Assigning utility button clicks
+        document.querySelectorAll('.analysis-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.getAttribute('data-action');
+                if (action === 'ask_chatbot') {
+                    if (isDrawerOpen) toggleDrawer();
+                    elCustomPromptInput.focus();
+                    elCustomPromptInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    showConsoleToast("Ask Chatbot selected. Enter your query below.", "info");
+                    return;
+                }
+                if (action && ACTION_PROMPTS[action]) {
+                    if (isDrawerOpen) toggleDrawer();
+                    runCyberAnalysis(ACTION_PROMPTS[action], action);
+                }
+            });
+        });
+
+        // Direct AI Query Listener Setup
+        const elDirectQueryInput = document.getElementById('direct-query-input');
+        const elBtnDirectQuery = document.getElementById('btn-direct-query');
+
+        elBtnDirectQuery.addEventListener('click', () => {
+            runDirectQuery();
+        });
+
+        elDirectQueryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                runDirectQuery();
+            }
+        });
+
+        async function runDirectQuery() {
+            const promptValue = elDirectQueryInput.value.trim();
+            if (!promptValue) return;
+
+            if (!STATE.apiKey) {
+                showConsoleToast("Handshake missing: Enter and verify your Gemini Token.", "error");
+                elApiKeyInput.focus();
+                return;
+            }
+
+            if (isDrawerOpen) toggleDrawer();
+
+            elWorkspaceLoading.classList.remove('hidden');
+            elOutputPlaceholder?.classList.add('hidden');
+            elLoadingStep.textContent = "Querying general Gemini brain...";
+
+            try {
+                const systemPrompt = `You are CAIRN, an elite cybersecurity intelligence assistant.
+                Answer the user's technical cybersecurity query directly, clearly, and with high professional accuracy.
+                Provide tactical mitigations, architectural paradigms, telemetry targets, secure SDLC concepts, or threat landscape updates.
+                Format output beautifully in clear markdown.`;
+
+                const modelEndpoint = elModelSelect.value;
+                const response = await fetchWithExponentialBackoff(`https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}:generateContent?key=${STATE.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptValue }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error?.message || "Internal server connection failure.");
+                }
+
+                const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!resultText) {
+                    throw new Error("No candidates generated. Check token limit or safety configurations.");
+                }
+
+                // Render direct AI response
+                renderDirectResult(`Direct AI Consult: "${promptValue}"`, resultText);
+                elDirectQueryInput.value = "";
+            } catch (err) {
+                showConsoleToast(`Engine Failure: ${err.message}`, "error");
+                elOutputRenderedArea.innerHTML = `
+                    <div class="p-4 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500">
+                        <h4 class="font-mono font-bold text-xs flex items-center gap-2">
+                            <i data-lucide="alert-triangle"></i> COMPILATION EXCEPTION
+                        </h4>
+                        <p class="mt-2 font-mono text-[11px] leading-relaxed bg-stone-900 p-2.5 rounded text-stone-300 overflow-x-auto">${err.message}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            } finally {
+                elWorkspaceLoading.classList.add('hidden');
+            }
+        }
+
+        function renderDirectResult(title, textMarkdown) {
+            const parsedHtml = parseSimpleMarkdown(textMarkdown);
+            elOutputRenderedArea.innerHTML = `
+                <div class="space-y-4">
+                    <div class="border-b border-stone-200 dark:border-cyber-border pb-3">
+                        <div class="flex items-center space-x-1.5 text-[9px] font-mono text-stone-400 dark:text-cyber-muted">
+                            <span>Direct Oracle Query</span>
+                            <span>&bull;</span>
+                            <span>${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <h3 class="text-xs font-extrabold tracking-tight font-mono text-cyber-accent mt-1 uppercase flex items-center gap-1.5">
+                            <i data-lucide="brain-circuit" class="w-3.5 h-3.5"></i> ${title}
+                        </h3>
+                    </div>
+
+                    <div class="text-stone-700 dark:text-stone-300 leading-relaxed space-y-3 font-sans break-words text-xs">
+                        ${parsedHtml}
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+            elAnalysisOutputContainer.scrollTop = 0;
+        }
+
+        // CENTRAL ENGINE COMPILER PIPELINE
+        async function runCyberAnalysis(actionObj, actionKey) {
+            if (!STATE.selectedPaperId) {
+                showConsoleToast("Ingestion target missing: Select a document first.", "error");
+                return;
+            }
+
+            const activePaper = STATE.papers.find(p => p.id === STATE.selectedPaperId);
+            if (!activePaper) return;
+
+            if (!STATE.apiKey) {
+                showConsoleToast("Handshake missing: Enter and verify your Gemini Token.", "error");
+                elApiKeyInput.focus();
+                return;
+            }
+
+            elWorkspaceLoading.classList.remove('hidden');
+            elOutputPlaceholder?.classList.add('hidden');
+            elLoadingStep.textContent = `Analyzing ${activePaper.name}...`;
+
+            try {
+                const systemPrompt = `You are CAIRN, an elite cybersecurity intelligence assistant.
+Your focus is to analyze, summarize, and extract highly technical telemetry from cybersecurity papers, reports, and threat logs.
+Strict operational constraints:
+1. Adhere ONLY to verified data points in the text payload. Do not speculate.
+2. Format references explicitly, citing paper name.
+3. When evidence is absent, state: "Source context contains no telemetry matching this query."
+4. Maintain a strictly defensive, technical, threat-hunting orientation. Refuse exploit generation queries, redirection paths, or malicious scripts.`;
+
+                const userContent = `File: "${activePaper.name}"
+Text Payload:
+-------------------------
+${activePaper.extractedText}
+-------------------------
+
+Execute this module: ${actionObj.prompt}`;
+
+                const modelEndpoint = elModelSelect.value;
+                const response = await fetchWithExponentialBackoff(`https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}:generateContent?key=${STATE.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userContent }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error?.message || "Internal server connection failure.");
+                }
+
+                const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!resultText) {
+                    throw new Error("No candidates generated. Check token limit or safety configurations.");
+                }
+
+                renderAnalysisResult(actionObj.title, resultText, activePaper);
+            } catch (err) {
+                showConsoleToast(`Engine Failure: ${err.message}`, "error");
+                elOutputRenderedArea.innerHTML = `
+                    <div class="p-4 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500">
+                        <h4 class="font-mono font-bold text-xs flex items-center gap-2">
+                            <i data-lucide="alert-triangle"></i> COMPILATION EXCEPTION
+                        </h4>
+                        <p class="mt-2 font-mono text-[11px] leading-relaxed bg-stone-900 p-2.5 rounded text-stone-300 overflow-x-auto">${err.message}</p>
+                    </div>
+                `;
+                lucide.createIcons();
+            } finally {
+                elWorkspaceLoading.classList.add('hidden');
+            }
+        }
+
+        // CUSTOM INPUT CHAT HANDLER
+        elChatInputForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const promptValue = elCustomPromptInput.value.trim();
+            if (!promptValue) return;
+
+            if (!STATE.selectedPaperId) {
+                showConsoleToast("No active document loaded.", "error");
+                return;
+            }
+
+            const activePaper = STATE.papers.find(p => p.id === STATE.selectedPaperId);
+            if (!activePaper) return;
+
+            if (!STATE.apiKey) {
+                showConsoleToast("API Token required.", "error");
+                elApiKeyInput.focus();
+                return;
+            }
+
+            elWorkspaceLoading.classList.remove('hidden');
+            elLoadingStep.textContent = "Parsing telemetry heuristics...";
+
+            try {
+                const systemPrompt = `You are CAIRN. Assist threat hunting analysts by resolving user questions based ONLY on the paper contents. Refuse malicious exploit requests, directing users instead to defensive telemetry, patch releases, and system auditing.`;
+
+                const userPrompt = `Document: "${activePaper.name}"
+Payload text:
+---
+${activePaper.extractedText}
+---
+
+Question: ${promptValue}`;
+
+                const modelEndpoint = elModelSelect.value;
+                const response = await fetchWithExponentialBackoff(`https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}:generateContent?key=${STATE.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userPrompt }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error?.message || "Execution exception.");
+                }
+
+                const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!resultText) {
+                    throw new Error("Empty candidate result.");
+                }
+
+                renderAnalysisResult(`Analyst Command: "${promptValue}"`, resultText, activePaper);
+                elCustomPromptInput.value = "";
+                elCharCounter.textContent = "0 / 2000 chars";
+            } catch (err) {
+                showConsoleToast(err.message, "error");
+            } finally {
+                elWorkspaceLoading.classList.add('hidden');
+            }
+        });
+
+        elCustomPromptInput.addEventListener('input', () => {
+            const len = elCustomPromptInput.value.length;
+            elCharCounter.textContent = `${len} / 2000 chars`;
+        });
+
+        // RETRY NETWORK HELPER
+        async function fetchWithExponentialBackoff(url, options, retries = 5, delay = 1000) {
+            try {
+                const response = await fetch(url, options);
+                if (response.status === 429 && retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithExponentialBackoff(url, options, retries - 1, delay * 2);
+                }
+                return response;
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return fetchWithExponentialBackoff(url, options, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+
+        // RENDER OUTPUT & CITATION BLOCKS
+        function renderAnalysisResult(title, textMarkdown, paper) {
+            let citationHtml = "";
+            if (paper.id.startsWith('sample')) {
+                citationHtml = `
+                    <div class="mt-4 p-3 bg-cyber-accent/5 border-l-2 border-cyber-accent text-[10px] font-mono leading-relaxed rounded-r text-stone-500 dark:text-cyber-muted">
+                        <span class="font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider block mb-1">Grounded References</span>
+                        ${paper.name}, Sect. 1-3 Core microarchitectural assertions & verified timing logs.
+                    </div>
+                `;
+            } else {
+                citationHtml = `
+                    <div class="mt-4 p-3 bg-rose-500/5 border-l-2 border-rose-500 text-[10px] font-mono leading-relaxed rounded-r text-stone-500 dark:text-cyber-muted">
+                        <span class="font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider block mb-1">Grounded References</span>
+                        ${paper.name} — Full payload ingested locally. Page citation mapping restricted to binary fallback structures.
+                    </div>
+                `;
+            }
+
+            const parsedHtml = parseSimpleMarkdown(textMarkdown);
+
+            elOutputRenderedArea.innerHTML = `
+                <div class="space-y-4">
+                    <div class="border-b border-stone-200 dark:border-cyber-border pb-3">
+                        <div class="flex items-center space-x-1.5 text-[9px] font-mono text-stone-400 dark:text-cyber-muted">
+                            <span>Diagnostic Event Log</span>
+                            <span>&bull;</span>
+                            <span>${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <h3 class="text-xs font-extrabold tracking-tight font-mono text-cyber-accent mt-1 uppercase flex items-center gap-1.5">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> ${title}
+                        </h3>
+                    </div>
+
+                    <div class="text-stone-700 dark:text-stone-300 leading-relaxed space-y-3 font-sans break-words text-[11px]">
+                        ${parsedHtml}
+                    </div>
+
+                    ${citationHtml}
+                </div>
+            `;
+            
+            lucide.createIcons();
+            elAnalysisOutputContainer.scrollTop = 0;
+        }
+
+        // SAFE MARKDOWN COMPILER
+        function parseSimpleMarkdown(md) {
+            let html = md;
+            
+            html = html.replace(/<(?!\/?[a-zA-Z])/g, "&lt;");
+
+            html = html.replace(/^### (.*$)/gim, '<h4 class="font-bold font-mono text-[11px] text-cyber-accent mt-4 border-b border-stone-200 dark:border-cyber-border pb-1">$1</h4>');
+            html = html.replace(/^## (.*$)/gim, '<h3 class="font-bold font-mono text-xs text-stone-800 dark:text-stone-100 mt-5">$1</h3>');
+            html = html.replace(/^# (.*$)/gim, '<h2 class="font-extrabold font-mono text-sm text-stone-950 dark:text-white mt-6">$1</h2>');
+
+            html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-stone-950 dark:text-white">$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+
+            html = html.replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-stone-300 dark:border-cyber-border pl-3 italic text-stone-500">$1</blockquote>');
+
+            // Table rendering parser logic
+            const lines = html.split('\n');
+            let insideTable = false;
+            let tableHtml = '<div class="overflow-x-auto my-3"><table class="min-w-full text-[10px] font-mono border border-stone-200 dark:border-cyber-border rounded"><thead>';
+            
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim().startsWith('|')) {
+                    const cells = lines[i].split('|').map(c => c.trim()).filter((c, idx, arr) => idx > 0 && idx < arr.length - 1);
+                    
+                    if (!insideTable) {
+                        insideTable = true;
+                        tableHtml += '<tr class="bg-stone-100 dark:bg-cyber-slate border-b border-stone-200 dark:border-cyber-border">' + cells.map(c => `<th class="px-3 py-2 text-left font-bold border-r border-stone-200 dark:border-cyber-border text-stone-700 dark:text-stone-300">${c}</th>`).join('') + '</tr></thead><tbody>';
+                    } else if (lines[i].includes('---')) {
+                        continue;
+                    } else {
+                        tableHtml += '<tr class="border-b border-stone-100 dark:border-cyber-border/40">' + cells.map(c => `<td class="px-3 py-1.5 border-r border-stone-100 dark:border-cyber-border/40 text-stone-600 dark:text-stone-400">${c}</td>`).join('') + '</tr>';
+                    }
+                    lines[i] = "";
+                } else if (insideTable) {
+                    insideTable = false;
+                    tableHtml += '</tbody></table></div>';
+                    lines[i] = tableHtml + '\n' + lines[i];
+                }
+            }
+            html = lines.join('\n');
+
+            html = html.replace(/`(.*?)`/g, '<code class="bg-stone-100 dark:bg-cyber-slate px-1.5 py-0.5 rounded font-mono text-[10px] text-cyber-accent">$1</code>');
+
+            html = html.replace(/^\s*-\s+(.*$)/gim, '<li class="list-disc ml-5 mt-1">$1</li>');
+            html = html.replace(/^\s*\*\s+(.*$)/gim, '<li class="list-disc ml-5 mt-1">$1</li>');
+            html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li class="list-decimal ml-5 mt-1">$2</li>');
+
+            html = html.replace(/\n\s*\n/g, '<p class="my-2"></p>');
+
+            return html;
+        }
+
+        // Action controls
+        elBtnClearWorkspace.addEventListener('click', () => {
+            resetOutputPlaceholder();
+            showConsoleToast("Output workspace parameters cleared.", "info");
+        });
+
+        // TOAST INTERFACE LOGGER (Avoid popup alert dependencies)
+        function showConsoleToast(message, type = "info") {
+            const existingToast = document.getElementById('cairn-toast');
+            if (existingToast) existingToast.remove();
+
+            const toast = document.createElement('div');
+            toast.id = "cairn-toast";
+            
+            let colorTheme = "bg-stone-900 border-stone-700 text-stone-100";
+            let iconType = "info";
+            if (type === "success") {
+                colorTheme = "bg-rose-950/90 border-rose-500/30 text-rose-300";
+                iconType = "check-circle";
+            } else if (type === "error") {
+                colorTheme = "bg-rose-950/90 border-rose-500/30 text-rose-300";
+                iconType = "alert-triangle";
+            }
+
+            toast.className = `fixed bottom-6 right-6 px-4 py-3 border rounded-xl shadow-2xl z-50 text-xs font-mono transition-transform duration-300 translate-y-10 flex items-center space-x-2.5 ${colorTheme}`;
+            toast.innerHTML = `<i data-lucide="${iconType}" class="w-4 h-4 flex-shrink-0"></i> <span>${message}</span>`;
+            
+            document.body.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-10');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-5');
+                setTimeout(() => toast.remove(), 300);
+            }, 4500);
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        // Toggle Key Visibility Masking
+        const toggleKeyBtn = document.getElementById('toggle-key-visibility');
+        let keyVisible = false;
+        toggleKeyBtn.addEventListener('click', () => {
+            keyVisible = !keyVisible;
+            elApiKeyInput.type = keyVisible ? "text" : "password";
+            toggleKeyBtn.innerHTML = `<i data-lucide="${keyVisible ? 'eye-off' : 'eye'}" class="w-3.5 h-3.5"></i>`;
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
